@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FollowUp Flow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-card">
+        <span class="eyebrow">FollowUp Flow</span>
+        <h1>Small business lead follow-up tracker</h1>
+        <p>Track who to contact, when to follow up, and what should happen next.</p>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="section-top">
+          <div>
+            <span class="eyebrow">Filters</span>
+            <h2>View leads</h2>
+          </div>
+        </div>
+
+        <div class="filter-stack">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="today">Due today</button>
+          <button class="filter-btn" data-filter="overdue">Overdue</button>
+          <button class="filter-btn" data-filter="waiting">Waiting</button>
+          <button class="filter-btn" data-filter="won">Won</button>
+          <button class="filter-btn" data-filter="lost">Lost</button>
+        </div>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="section-top">
+          <div>
+            <span class="eyebrow">Quick stats</span>
+            <h2>Pipeline snapshot</h2>
+          </div>
+        </div>
+
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <span>Total leads</span>
+            <strong id="statTotal">0</strong>
+          </div>
+          <div class="mini-stat">
+            <span>Due today</span>
+            <strong id="statToday">0</strong>
+          </div>
+          <div class="mini-stat">
+            <span>Overdue</span>
+            <strong id="statOverdue">0</strong>
+          </div>
+          <div class="mini-stat">
+            <span>Won</span>
+            <strong id="statWon">0</strong>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <span class="eyebrow">Offline CRM-lite</span>
+          <h2>Never forget a lead again</h2>
+          <p>Structured follow-up works better than memory, scattered notes, or inbox flags.</p>
+        </div>
+
+        <div class="topbar-actions">
+          <button id="themeToggle" class="btn btn-ghost" type="button">Theme</button>
+          <button id="exportBtn" class="btn btn-secondary" type="button">Export JSON</button>
+          <label class="btn btn-ghost import-label" for="importInput">Import JSON</label>
+          <input id="importInput" type="file" accept="application/json" hidden />
+        </div>
+      </header>
+
+      <section class="composer-card">
+        <div class="section-top">
+          <div>
+            <span class="eyebrow">New lead</span>
+            <h3>Add follow-up item</h3>
+          </div>
+        </div>
+
+        <form id="leadForm" class="form-grid">
+          <label>
+            <span>Lead name</span>
+            <input id="leadName" type="text" placeholder="Jane Smith" required />
+          </label>
+
+          <label>
+            <span>Company</span>
+            <input id="companyName" type="text" placeholder="Acme Studio" />
+          </label>
+
+          <label>
+            <span>Email</span>
+            <input id="email" type="email" placeholder="jane@company.com" />
+          </label>
+
+          <label>
+            <span>Phone</span>
+            <input id="phone" type="text" placeholder="+372..." />
+          </label>
+
+          <label>
+            <span>Status</span>
+            <select id="status">
+              <option value="new">New</option>
+              <option value="contacted">Contacted</option>
+              <option value="waiting">Waiting</option>
+              <option value="meeting">Meeting booked</option>
+              <option value="won">Won</option>
+              <option value="lost">Lost</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Priority</span>
+            <select id="priority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Owner</span>
+            <input id="owner" type="text" placeholder="You / sales rep name" />
+          </label>
+
+          <label>
+            <span>Next follow-up date</span>
+            <input id="followUpDate" type="date" required />
+          </label>
+
+          <label class="full-width">
+            <span>Next action</span>
+            <input id="nextAction" type="text" placeholder="Send proposal, call back, ask budget, book demo..." />
+          </label>
+
+          <label class="full-width">
+            <span>Notes</span>
+            <textarea id="notes" placeholder="What happened so far?"></textarea>
+          </label>
+
+          <div class="full-width form-actions">
+            <button class="btn btn-primary" type="submit">Add lead</button>
+            <button class="btn btn-ghost" id="resetFormBtn" type="button">Clear</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="board-top">
+        <div>
+          <span class="eyebrow">Lead list</span>
+          <h3>Your follow-up queue</h3>
+        </div>
+
+        <div class="search-wrap">
+          <input id="searchInput" type="text" placeholder="Search by lead, company, email, owner..." />
+        </div>
+      </section>
+
+      <section id="emptyState" class="empty-state">
+        <h3>No leads yet</h3>
+        <p>Add your first lead above and start tracking next actions, timing, and outcomes.</p>
+      </section>
+
+      <section id="leadList" class="lead-list"></section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
