@@ -9,6 +9,7 @@ const exportBtn = document.getElementById("exportBtn");
 const importInput = document.getElementById("importInput");
 const themeToggle = document.getElementById("themeToggle");
 const resetFormBtn = document.getElementById("resetFormBtn");
+const submitBtn = document.getElementById("submitBtn");
 
 const statTotal = document.getElementById("statTotal");
 const statToday = document.getElementById("statToday");
@@ -29,6 +30,7 @@ const fields = {
 };
 
 let activeFilter = "all";
+let editingId = null;
 let leads = loadLeads();
 
 function todayString() {
@@ -49,9 +51,8 @@ function setDefaultDate() {
   }
 }
 
-function formData() {
+function getFormValues() {
   return {
-    id: crypto.randomUUID(),
     leadName: fields.leadName.value.trim(),
     companyName: fields.companyName.value.trim(),
     email: fields.email.value.trim(),
@@ -61,8 +62,7 @@ function formData() {
     owner: fields.owner.value.trim(),
     followUpDate: fields.followUpDate.value,
     nextAction: fields.nextAction.value.trim(),
-    notes: fields.notes.value.trim(),
-    createdAt: new Date().toISOString()
+    notes: fields.notes.value.trim()
   };
 }
 
@@ -70,7 +70,25 @@ function clearForm() {
   leadForm.reset();
   fields.status.value = "new";
   fields.priority.value = "medium";
+  editingId = null;
+  submitBtn.textContent = "Add lead";
   setDefaultDate();
+}
+
+function fillForm(lead) {
+  fields.leadName.value = lead.leadName || "";
+  fields.companyName.value = lead.companyName || "";
+  fields.email.value = lead.email || "";
+  fields.phone.value = lead.phone || "";
+  fields.status.value = lead.status || "new";
+  fields.priority.value = lead.priority || "medium";
+  fields.owner.value = lead.owner || "";
+  fields.followUpDate.value = lead.followUpDate || todayString();
+  fields.nextAction.value = lead.nextAction || "";
+  fields.notes.value = lead.notes || "";
+  editingId = lead.id;
+  submitBtn.textContent = "Save changes";
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function isToday(date) {
@@ -127,6 +145,7 @@ function formatDate(date) {
 
 function getVisibleLeads() {
   const term = searchInput.value.trim();
+
   return leads
     .filter(matchesFilter)
     .filter(lead => matchesSearch(lead, term))
@@ -151,6 +170,7 @@ function renderLeads() {
   renderStats();
 
   emptyState.style.display = visibleLeads.length ? "none" : "block";
+
   leadList.innerHTML = visibleLeads.map(lead => {
     const overdue = isOverdue(lead.followUpDate, lead.status);
     const dueToday = isToday(lead.followUpDate);
@@ -192,6 +212,7 @@ function renderLeads() {
         <div class="lead-notes">${escapeHtml(lead.notes || "No notes yet.")}</div>
 
         <div class="lead-actions">
+          <button class="action-btn" data-action="edit" data-id="${lead.id}">Edit</button>
           <button class="action-btn" data-action="advance" data-id="${lead.id}">Advance status</button>
           <button class="action-btn" data-action="today" data-id="${lead.id}">Set follow-up to today</button>
           <button class="action-btn" data-action="copy" data-id="${lead.id}">Copy summary</button>
@@ -226,6 +247,10 @@ function deleteLead(id) {
   leads = leads.filter(lead => lead.id !== id);
   saveLeads();
   renderLeads();
+
+  if (editingId === id) {
+    clearForm();
+  }
 }
 
 function copyLeadSummary(id) {
@@ -246,8 +271,14 @@ Notes: ${lead.notes}`;
   navigator.clipboard.writeText(text);
 }
 
+function editLead(id) {
+  const lead = leads.find(item => item.id === id);
+  if (!lead) return;
+  fillForm(lead);
+}
+
 function escapeHtml(value) {
-  return value
+  return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -258,17 +289,27 @@ function escapeHtml(value) {
 leadForm.addEventListener("submit", (e) => {
   e.preventDefault();
 
-  const newLead = formData();
-  if (!newLead.leadName || !newLead.followUpDate) return;
+  const values = getFormValues();
+  if (!values.leadName || !values.followUpDate) return;
 
-  leads.unshift(newLead);
+  if (editingId) {
+    leads = leads.map(lead =>
+      lead.id === editingId ? { ...lead, ...values } : lead
+    );
+  } else {
+    leads.unshift({
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      ...values
+    });
+  }
+
   saveLeads();
   renderLeads();
   clearForm();
 });
 
 resetFormBtn.addEventListener("click", clearForm);
-
 searchInput.addEventListener("input", renderLeads);
 
 document.querySelectorAll(".filter-btn").forEach(btn => {
@@ -285,6 +326,7 @@ leadList.addEventListener("click", (e) => {
   const id = e.target.dataset.id;
   if (!action || !id) return;
 
+  if (action === "edit") editLead(id);
   if (action === "advance") advanceStatus(id);
   if (action === "today") setFollowUpToday(id);
   if (action === "copy") copyLeadSummary(id);
@@ -296,7 +338,7 @@ exportBtn.addEventListener("click", () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "followup-flow-data.json";
+  a.download = "lead-tracker-data.json";
   a.click();
   URL.revokeObjectURL(url);
 });
@@ -306,14 +348,16 @@ importInput.addEventListener("change", async (e) => {
   if (!file) return;
 
   const text = await file.text();
+
   try {
     const parsed = JSON.parse(text);
     if (Array.isArray(parsed)) {
       leads = parsed;
       saveLeads();
       renderLeads();
+      clearForm();
     }
-  } catch (err) {
+  } catch {
     alert("Invalid JSON file.");
   }
 
